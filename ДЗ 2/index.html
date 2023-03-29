@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <py-env>
+        - matplotlib
+        - networkx
+        - numpy
+    </py-env>
+    <title>Матрица смежностей</title>
+</head>
+
+<body style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+">
+    <div id="plot">
+
+    </div>
+    <h1>Матрица смежностей</h1>
+    <div style="display: grid;">
+        <textarea id="matrix-input"></textarea>
+        <button id="submit-button" type="submit" pys-onClick="my_function">OK</button>
+    </div>
+    
+    <py-script>
+        import matplotlib.pyplot as plt
+        import networkx as nx
+        import numpy as np
+
+        first = """1 4 3 1 1
+        4 2 0 0 2
+        3 0 1 0 0
+        1 0 0 0 2
+        1 2 0 2 1"""
+
+        def matrix_from_string(string):
+            matrix = []
+            try:
+                for line in string.split('\n'):
+                    matrix.append([int(i) for i in line.split()])
+            except ValueError:
+                pyscript.write('plot', 'Невозможно создать массив из строки')
+            return matrix
+
+        def my_function(*args, **kwargs):
+            matrix = matrix_from_string(Element('matrix-input').element.value)
+            plot_create(matrix)
+
+
+        def plot_create(matrix):
+            plt.clf()
+            try:
+                G = nx.from_numpy_array(np.array(matrix), create_using=nx.Graph)
+                pos = nx.spring_layout(G)
+                labels = {i: i + 1 for i in range(len(nx.nodes(G)))}
+                nx.draw(G,
+                pos,
+                node_color='#ccccff',
+                node_size=300,
+                edge_color='#9a8ed7',
+                labels=labels)
+                edge_labels = {i: str(matrix[i[1]][i[0]]) for i in nx.edges(G)}
+                nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+                pyscript.write('plot', plt)
+            except nx.NetworkXError:
+                pyscript.write('plot', 'Матрица не является квадратной')
+
+        plot_create(matrix_from_string(first))
+    </py-script>
+</body>
+
+</html>
